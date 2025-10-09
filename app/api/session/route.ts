@@ -124,6 +124,8 @@ interface EdgeConfig {
   regionDistribution:
     | Record<BrowserbaseRegion, Record<BrowserbaseRegion, number>>
     | undefined;
+  contextId: string | undefined;
+  contextPersist: boolean | undefined;
 }
 
 async function createSession(timezone?: string) {
@@ -137,10 +139,23 @@ async function createSession(timezone?: string) {
     advancedStealth: advancedStealthConfig,
     proxies: proxiesConfig,
     regionDistribution: distributionsConfig,
+    contextId: contextIdConfig,
+    contextPersist: contextPersistConfig,
   } = config;
 
   const advancedStealth: boolean = advancedStealthConfig ?? true;
   const proxies: boolean = proxiesConfig ?? true;
+  const envContextId = process.env.BROWSERBASE_CONTEXT_ID;
+  const envContextPersist = process.env.BROWSERBASE_CONTEXT_PERSIST;
+  const contextId = contextIdConfig ?? envContextId ?? undefined;
+  const contextPersist =
+    typeof contextPersistConfig === "boolean"
+      ? contextPersistConfig
+      : envContextPersist !== undefined
+      ? envContextPersist.toLowerCase() === "true"
+      : contextId
+      ? true
+      : undefined;
 
   // Build browserSettings conditionally
   const browserSettings: Browserbase.Sessions.SessionCreateParams.BrowserSettings =
@@ -159,6 +174,16 @@ async function createSession(timezone?: string) {
         : {
             os: "linux",
           }),
+      ...(contextId
+        ? {
+            context: {
+              id: contextId,
+              ...(typeof contextPersist === "boolean"
+                ? { persist: contextPersist }
+                : {}),
+            },
+          }
+        : {}),
     };
 
   // Use timezone abbreviation to determine base region
