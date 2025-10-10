@@ -145,9 +145,11 @@ async function createSession(timezone?: string) {
 
   const advancedStealth: boolean = advancedStealthConfig ?? true;
   const proxies: boolean = proxiesConfig ?? true;
-  const envContextId = process.env.BROWSERBASE_CONTEXT_ID;
+  const envContextId = process.env.BROWSERBASE_CONTEXT_ID?.trim();
   const envContextPersist = process.env.BROWSERBASE_CONTEXT_PERSIST;
-  const contextId = contextIdConfig ?? envContextId ?? undefined;
+  const normalizedContextIdConfig =
+    typeof contextIdConfig === "string" ? contextIdConfig.trim() : contextIdConfig;
+  const contextId = normalizedContextIdConfig ?? envContextId ?? undefined;
   const contextPersist =
     typeof contextPersistConfig === "boolean"
       ? contextPersistConfig
